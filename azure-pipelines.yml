@@ -4,31 +4,48 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 
+variables:
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: '<Your-Docker-Registry-Service-Connection>'
+  imageRepository: 'myapp'
+  containerRegistry: 'myregistry.azurecr.io'
+  dockerfilePath: 'Dockerfile'
+  tag: '$(Build.BuildId)'
+
 stages:
 - stage: Build
   jobs:
   - job: Build
+    displayName: Build and push image
     steps:
     - task: UseDotNet@2
       inputs:
         packageType: 'sdk'
         version: '5.x'
         installationPath: $(Agent.ToolsDirectory)/dotnet
+
     - script: 'dotnet build --configuration Release'
       displayName: 'Build project'
+
+    - task: Docker@2
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        repository: '$(imageRepository)'
+        command: 'buildAndPush'
+        Dockerfile: '$(dockerfilePath)'
+        tags: |
+          $(tag)
 
 - stage: Deploy
   jobs:
   - job: Deploy
-    environment: 'aks'
+    displayName: Deploy to AKS
     steps:
-    - task: Kubernetes@1
+    - task: KubernetesManifest@0
       inputs:
-        connectionType: 'Azure Resource Manager'
-        azureSubscription: '<Your-Azure-Subscription>'
-        azureResourceGroup: 'myResourceGroup'
-        kubernetesCluster: 'myAKSCluster'
+        action: 'deploy'
+        kubernetesServiceConnection: '<Your-Kubernetes-Service-Connection>'
         namespace: 'default'
-        command: 'apply'
-        useConfigurationFile: true
-        configuration: 'manifests/deployment.yaml'
+        manifests: '$(Pipeline.Workspace)/manifests/deployment.yaml'
+        containers: |
+          $(containerRegistry)/$(imageRepository):$(tag)
