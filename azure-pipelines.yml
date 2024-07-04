@@ -8,7 +8,7 @@ variables:
   # Container registry service connection established during pipeline creation
   dockerRegistryServiceConnection: '<Your-Docker-Registry-Service-Connection>'
   imageRepository: 'myapp'
-  containerRegistry: 'myregistry.azurecr.io'
+  containerRegistry: 'kldckregistry.azurecr.io'
   dockerfilePath: 'Dockerfile'
   tag: '$(Build.BuildId)'
 

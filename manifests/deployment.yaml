@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: myapp
-        image: myregistry.azurecr.io/myapp:$(tag)
+        image: kldckregistry.azurecr.io/myapp:$(tag)
         ports:
         - containerPort: 80
 ---
